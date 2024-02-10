@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 
-from src.routes.routes import all_routers
+from src.presentation.api.routes.routes import all_routers
 
 app = FastAPI(
     title="Контроль заданий на выпуск продукции"
