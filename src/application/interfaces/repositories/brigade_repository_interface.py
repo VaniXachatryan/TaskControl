@@ -11,3 +11,7 @@ class IBrigadeRepository(IRepository, ABC):
     @abstractmethod
     async def get_by_title(self, title: str) -> Brigade | None:
         pass
+
+    @abstractmethod
+    async def get_or_create_by_title(self, title: str) -> Brigade:
+        pass

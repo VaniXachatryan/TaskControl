@@ -7,5 +7,9 @@ from src.infrastructure.common.base_repository import IRepository
 class IWorkCenterRepository(IRepository, ABC):
 
     @abstractmethod
-    async def get_by_code(self, code: str) -> WorkCenter:
+    async def get_by_code(self, code: str) -> WorkCenter | None:
+        pass
+
+    @abstractmethod
+    async def get_or_create_by_code(self, code: str) -> WorkCenter:
         pass

@@ -16,3 +16,16 @@ class WorkCenterRepository(BaseRepository, IWorkCenterRepository):
         query = select(self.model).where(self.model.code == code)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
+    async def get_or_create_by_code(self, code: str) -> WorkCenter:
+        query = select(self.model).where(self.model.code == code)
+        result = await self.session.execute(query)
+        result = result.scalar_one_or_none()
+
+        if result is None:
+            new_work_center: WorkCenter = WorkCenter(code=code)
+            self.session.add(new_work_center)
+            await self.session.flush()
+            result = new_work_center
+
+        return result

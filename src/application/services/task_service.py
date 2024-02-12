@@ -37,36 +37,15 @@ class TaskService(ITaskService):
             shift_end_date: Optional[datetime]
     ) -> Result[Task, str]:
         batch_date = batch_date.replace(tzinfo=None)
+        shift_start_date = shift_start_date.replace(tzinfo=None)
+        shift_end_date = shift_end_date.replace(tzinfo=None)
         async with self.uow:
-            batch: Batch = await self.uow.batches.get_by_number_and_date(number=batch_number, date=batch_date)
-            line: Line = await self.uow.lines.get_by_code(code=line_code)
-            work_center: WorkCenter = await self.uow.work_centers.get_by_code(code=work_center_code)
-            shift: Shift = await self.uow.shifts.get_by_number(number=shift)
-            brigade: Brigade = await self.uow.brigades.get_by_title(title=brigade_title)
-
-            if line is None:
-                line: Line = Line(code=line_code)
-                await self.uow.lines.create(entity=line)
-                await self.uow.flush()
-
-            if batch is None:
-                batch = Batch(line_id=line.id, number=batch_number,
-                                     date=batch_date)
-                await self.uow.batches.create(entity=batch)
-
-            if shift is None:
-                shift = Shift(code=shift)
-                await self.uow.shifts.create(entity=shift)
-
-            if brigade is None:
-                brigade = Brigade(title=brigade_title)
-                await self.uow.brigades.create(entity=brigade)
-
-            if work_center is None:
-                work_center = WorkCenter(code=work_center_code)
-                await self.uow.work_centers.create(entity=work_center)
-
-            await self.uow.flush()
+            line: Line = await self.uow.lines.get_or_create_by_code(code=line_code)
+            batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(number=batch_number, date=batch_date, line_id=line.id)
+            work_center: WorkCenter = await self.uow.work_centers.get_or_create_by_code(code=work_center_code)
+            shift: Shift = await self.uow.shifts.get_or_create_by_number(start_at=shift_start_date,
+                                                                         end_at=shift_end_date, number=shift)
+            brigade: Brigade = await self.uow.brigades.get_or_create_by_title(title=brigade_title)
 
             task: Task = await self.uow.tasks.get_by_batch_id(batch_id=batch.id) or Task()
 
