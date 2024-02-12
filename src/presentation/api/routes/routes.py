@@ -1,3 +1,3 @@
-from src.presentation.api.routes.task import router as TaskRouter
+from src.presentation.api.routes.task import router as task_router
 
-all_routers = [TaskRouter]
+all_routers = [task_router]

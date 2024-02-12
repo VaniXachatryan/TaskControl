@@ -10,3 +10,11 @@ class Shift(BaseModel):
 
     start_at: Mapped[datetime]
     end_at: Mapped[datetime] = mapped_column(nullable=True)
+    number: Mapped[str] = mapped_column(nullable=False)
+
+    def to_read_model(self):
+        return {
+            "id": self.id,
+            "start_at": self.start_at,
+            "end_at": self.end_at,
+        }

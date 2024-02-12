@@ -9,4 +9,7 @@ class Brigade(BaseModel):
     title: Mapped[str] = mapped_column(nullable=False)
 
     def to_read_model(self):
-        pass
+        return {
+            "id": self.id,
+            "title": self.title,
+        }

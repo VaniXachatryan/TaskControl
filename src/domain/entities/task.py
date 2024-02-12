@@ -9,7 +9,6 @@ from src.domain.entities.batch import Batch
 from src.domain.entities.line import Line
 from src.domain.entities.shift import Shift
 from src.domain.entities.work_center import WorkCenter
-from src.presentation.api.schemas.task import TaskSchemaAdd
 
 
 class Task(BaseModel):
@@ -26,23 +25,22 @@ class Task(BaseModel):
     nomenclature: Mapped[str]
     ekn_code: Mapped[str]
 
-    line = relationship(Line, lazy="joined")
-    batch = relationship(Batch, lazy="joined")
-    work_center = relationship(WorkCenter, lazy="joined")
-    shift = relationship(Shift, lazy="joined")
-    brigade = relationship(Brigade, lazy="joined")
+    line: Mapped[Line] = relationship(Line, lazy="joined")
+    batch: Mapped[Batch] = relationship(Batch, lazy="joined")
+    work_center: Mapped[WorkCenter] = relationship(WorkCenter, lazy="joined")
+    shift: Mapped[Shift] = relationship(Shift, lazy="joined")
+    brigade: Mapped[Brigade] = relationship(Brigade, lazy="joined")
 
     def to_read_model(self):
-        return TaskSchemaAdd(
+        return Task(
+            id=self.id,
+            title=self.title,
             is_closed=self.is_closed,
-            title=self.name,
-            work_center=self.work_center.title,
-            work_center_id=self.work_center_id,
-            brigade_id=self.brigade_id,
-            batch_number=self.batch.number,
+            work_center=self.work_center,
+            batch=self.batch,
+            line=self.line,
+            shift=self.shift,
+            brigade=self.brigade,
             nomenclature=self.nomenclature,
-            ekn_code=self.ekn_code,
-            shift_id=self.shift_id,
-            shift_start_date=self.shift.shift_start_date,
-            shift_end_date=self.shift.shift_end_date
+            ekn_code=self.ekn_code
         )
