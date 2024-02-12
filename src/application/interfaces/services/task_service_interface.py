@@ -4,6 +4,7 @@ from typing import Optional
 
 from returns.result import Result
 
+from src.application.common.results.task_result import TaskResultWithProductIdsResult
 from src.domain.entities.task import Task
 
 
@@ -24,5 +25,10 @@ class ITaskService(ABC):
             shift_start_date: datetime,
             shift_end_date: Optional[datetime]
     ) -> Result[Task, str]:
+        pass
+
+    @abstractmethod
+    async def get_by_id_with_product_id(self, task_id: str) \
+            -> Result[TaskResultWithProductIdsResult, str]:
         pass
 

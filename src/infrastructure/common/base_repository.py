@@ -15,11 +15,13 @@ class BaseRepository(IRepository):
 
     async def create(self, entity: model) -> None:
         self.session.add(entity)
+        await self.session.flush()
 
     async def update(self, entity: model) -> None:
         await self.session.merge(entity)
+        await self.session.flush()
 
     async def get_by_id(self, entity_id: int) -> BaseModel | None:
         query = select(self.model).where(self.model.id == entity_id)
         result = await self.session.execute(query)
-        return result.one_or_none()
+        return result.scalar_one_or_none()

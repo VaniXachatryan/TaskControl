@@ -16,7 +16,7 @@ class BaseModel(DeclarativeBase):
 
     @abstractmethod
     def to_read_model(self):
-        raise NotImplementedError
+        pass
 
 
 async def get_async_session() -> AsyncSession:

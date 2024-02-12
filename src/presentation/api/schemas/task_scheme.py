@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
@@ -11,15 +11,20 @@ from src.presentation.api.schemas.work_center_scheme import WorkCenterScheme
 
 
 class TaskScheme(BaseModel):
+    id: int
     is_closed: bool
     title: str
-    line: LineScheme
-    shift: ShiftScheme
-    brigade: BrigadeScheme
-    batch: BatchScheme
+    line: str
+    shift: str
+    brigade: str
+    batch: int
     nomenclature: str
     ekn_code: str
-    work_center: WorkCenterScheme
+    work_center: str
+
+
+class TaskWithProductIdsScheme(TaskScheme):
+    products: List[int]
 
 
 class TaskSchemeAdd(BaseModel):

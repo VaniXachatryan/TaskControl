@@ -1,18 +1,11 @@
-from http import HTTPStatus
+from fastapi import APIRouter, HTTPException
+from returns.result import Result, Success, Failure
 
-from fastapi import APIRouter
-from returns.result import Result, Failure, Success
-from starlette.responses import JSONResponse
-
-from src.domain.common.errors.batch_errors import BatchErrors
-from src.domain.common.errors.brigade_errors import BrigadeErrors
-from src.domain.common.errors.line_errors import LineErrors
-from src.domain.common.errors.work_center_errors import WorkCenterErrors
+from src.application.common.results.task_result import TaskResultWithProductIdsResult, TaskResult
+from src.domain.common.errors.task_errors import TaskErrors
 from src.domain.entities.task import Task
 from src.presentation.api.depends import TaskServiceDepend
-from src.presentation.api.mapping.task_mapper import task_to_task_scheme_add
-from src.presentation.api.models.responses import get_response
-from src.presentation.api.schemas.task_scheme import TaskSchemeAdd
+from src.presentation.api.schemas.task_scheme import TaskSchemeAdd, TaskScheme, TaskWithProductIdsScheme
 
 router = APIRouter(
     prefix="/tasks",
@@ -22,7 +15,7 @@ router = APIRouter(
 
 @router.post("/create", status_code=201)
 async def create_task(task_service: TaskServiceDepend, schema: TaskSchemeAdd):
-    result: Result[Task, str] = await task_service.add(
+    result: Result[TaskResult, str] = await task_service.add(
         is_closed=schema.is_closed,
         task_title=schema.title,
         line_code=schema.line_code,
@@ -38,17 +31,41 @@ async def create_task(task_service: TaskServiceDepend, schema: TaskSchemeAdd):
     )
 
     match result:
-        case Failure(BatchErrors.not_found):
-            return JSONResponse(content=get_response("Партия не найдена"), status_code=HTTPStatus.CONFLICT)
-        case Failure(BrigadeErrors.not_found):
-            return JSONResponse(content=get_response("Бригада не найдена"), status_code=HTTPStatus.CONFLICT)
-        case Failure(WorkCenterErrors.not_found):
-            return JSONResponse(content=get_response("Рабочий центр не найден"), status_code=HTTPStatus.CONFLICT)
-        case Failure(BatchErrors.task_not_found_for_batch):
-            return JSONResponse(content=get_response("Данная партия сущестует, но у нее нет задания"),
-                                status_code=HTTPStatus.CONFLICT)
-        case Failure(LineErrors.not_found):
-            return JSONResponse(content=get_response("Линия не найдена"), status_code=HTTPStatus.CONFLICT)
         case Success(value):
-            return task_to_task_scheme_add(value.to_read_model())
+            value: TaskResult
+            return TaskScheme(
+                id=value.id,
+                title=value.title,
+                is_closed=value.is_closed,
+                line=value.line.code,
+                shift=value.shift.number,
+                brigade=value.brigade.title,
+                batch=value.batch.number,
+                nomenclature=value.nomenclature,
+                ekn_code=value.ekn_code,
+                work_center=value.work_center.code
+            )
 
+
+@router.get("/get_with_products", status_code=200)
+async def get_by_id(task_service: TaskServiceDepend, id: int):
+    result: Result[TaskResultWithProductIdsResult, str] = await task_service.get_by_id_with_product_id(task_id=id)
+
+    match result:
+        case Success(value):
+            value: TaskResultWithProductIdsResult
+            return TaskWithProductIdsScheme(
+                id=value.id,
+                title=value.title,
+                is_closed=value.is_closed,
+                line=value.line.code,
+                shift=value.shift.number,
+                brigade=value.brigade.title,
+                batch=value.batch.number,
+                nomenclature=value.nomenclature,
+                ekn_code=value.ekn_code,
+                work_center=value.work_center.code,
+                products=value.products
+            )
+        case Failure(TaskErrors.not_found):
+            return HTTPException(status_code=404, detail="Сменное задание не найдено.")

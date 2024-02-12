@@ -9,7 +9,7 @@ class Line(BaseModel):
     code: Mapped[str] = mapped_column(nullable=False)
 
     def to_read_model(self):
-        return {
-            "id": self.id,
-            "code": self.code
-        }
+        return Line(
+            id=self.id,
+            code=self.code
+        )

@@ -17,9 +17,9 @@ class Batch(BaseModel):
     line = relationship(Line, lazy="joined")
 
     def to_read_model(self):
-        return {
-            "id": self.id,
-            "number": self.number,
-            "date": self.date,
-            "line": self.line
-        }
+        return Batch(
+            id=self.id,
+            number=self.number,
+            date=self.date,
+            line=self.line
+        )

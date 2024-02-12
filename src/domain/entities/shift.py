@@ -13,8 +13,9 @@ class Shift(BaseModel):
     number: Mapped[str]
 
     def to_read_model(self):
-        return {
-            "id": self.id,
-            "start_at": self.start_at,
-            "end_at": self.end_at,
-        }
+        return Shift(
+            id=self.id,
+            number=self.number,
+            start_at=self.start_at,
+            end_at=self.end_at
+        )
