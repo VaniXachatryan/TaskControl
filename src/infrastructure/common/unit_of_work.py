@@ -1,3 +1,5 @@
+from sqlalchemy.exc import PendingRollbackError, SQLAlchemyError
+
 from src.application.interfaces.repositories.batch_repository_interface import IBatchRepository
 from src.application.interfaces.repositories.brigade_repository_interface import IBrigadeRepository
 from src.application.interfaces.repositories.line_repository_interface import ILineRepository
@@ -18,10 +20,7 @@ from src.infrastructure.repositories.work_center_repository import WorkCenterRep
 
 class UnitOfWork(IUnitOfWork):
     def __init__(self):
-        self.session_factory = async_session_maker
-
-    async def __aenter__(self):
-        self.session = self.session_factory()
+        self.session = async_session_maker()
 
         self.tasks: ITaskRepository = TaskRepository(self.session)
         self.batches: IBatchRepository = BatchRepository(self.session)
@@ -31,12 +30,13 @@ class UnitOfWork(IUnitOfWork):
         self.shifts: IShiftRepository = ShiftRepository(self.session)
         self.products: IProductRepository = ProductRepository(self.session)
 
-    async def __aexit__(self, *args):
-        await self.rollback()
-        await self.session.close()
-
     async def commit(self):
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except SQLAlchemyError as e:
+            await self.rollback()
+        finally:
+            await self.session.close()
 
     async def flush(self):
         await self.session.flush()
