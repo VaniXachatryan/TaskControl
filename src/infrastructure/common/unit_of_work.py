@@ -1,4 +1,4 @@
-from sqlalchemy.exc import PendingRollbackError, SQLAlchemyError
+from sqlalchemy.exc import PendingRollbackError
 
 from src.application.interfaces.repositories.batch_repository_interface import IBatchRepository
 from src.application.interfaces.repositories.brigade_repository_interface import IBrigadeRepository
@@ -33,7 +33,7 @@ class UnitOfWork(IUnitOfWork):
     async def commit(self):
         try:
             await self.session.commit()
-        except SQLAlchemyError as e:
+        except PendingRollbackError:
             await self.rollback()
         finally:
             await self.session.close()
@@ -43,3 +43,6 @@ class UnitOfWork(IUnitOfWork):
 
     async def rollback(self):
         await self.session.rollback()
+
+    def __del__(self):
+        self.session.delete()
