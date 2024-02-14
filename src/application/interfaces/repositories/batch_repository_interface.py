@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+from src.application.interfaces.repositories.repository_interface import IRepository
 from src.domain.entities.batch import Batch
-from src.infrastructure.common.base_repository import IRepository
 
 
 class IBatchRepository(IRepository, ABC):

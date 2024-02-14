@@ -3,8 +3,9 @@ from returns.result import Result, Success, Failure
 
 from src.application.common.results.task_result import TaskResultWithProductIdsResult, TaskResult
 from src.domain.common.errors.task_errors import TaskErrors
-from src.domain.entities.task import Task
 from src.presentation.api.depends import TaskServiceDepend
+from src.presentation.api.mapper.task_mapper import (task_result_to_task_scheme,
+                                                     task_with_product_ids_result_to_task_with_product_scheme)
 from src.presentation.api.schemas.task_scheme import TaskSchemeAdd, TaskScheme, TaskWithProductIdsScheme
 
 router = APIRouter(
@@ -32,19 +33,7 @@ async def create_task(task_service: TaskServiceDepend, schema: TaskSchemeAdd):
 
     match result:
         case Success(value):
-            value: TaskResult
-            return TaskScheme(
-                id=value.id,
-                title=value.title,
-                is_closed=value.is_closed,
-                line=value.line.code,
-                shift=value.shift.number,
-                brigade=value.brigade.title,
-                batch=value.batch.number,
-                nomenclature=value.nomenclature,
-                ekn_code=value.ekn_code,
-                work_center=value.work_center.code
-            )
+            return task_result_to_task_scheme(value)
 
 
 @router.get("/get_with_products", status_code=200)
@@ -53,19 +42,7 @@ async def get_by_id(task_service: TaskServiceDepend, id: int):
 
     match result:
         case Success(value):
-            value: TaskResultWithProductIdsResult
-            return TaskWithProductIdsScheme(
-                id=value.id,
-                title=value.title,
-                is_closed=value.is_closed,
-                line=value.line.code,
-                shift=value.shift.number,
-                brigade=value.brigade.title,
-                batch=value.batch.number,
-                nomenclature=value.nomenclature,
-                ekn_code=value.ekn_code,
-                work_center=value.work_center.code,
-                products=value.products
-            )
+            return task_with_product_ids_result_to_task_with_product_scheme(value)
+
         case Failure(TaskErrors.not_found):
             return HTTPException(status_code=404, detail="Сменное задание не найдено.")

@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
 
-from sqlalchemy import select
-
+from src.application.interfaces.repositories.repository_interface import IRepository
 from src.domain.entities.brigade import Brigade
-from src.infrastructure.common.base_repository import IRepository
 
 
 class IBrigadeRepository(IRepository, ABC):

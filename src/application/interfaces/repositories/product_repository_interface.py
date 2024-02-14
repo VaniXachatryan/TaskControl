@@ -1,10 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from sqlalchemy import select
-
-from src.domain.entities.brigade import Brigade
-from src.infrastructure.common.base_repository import IRepository
+from src.application.interfaces.repositories.repository_interface import IRepository
 
 
 class IProductRepository(IRepository, ABC):

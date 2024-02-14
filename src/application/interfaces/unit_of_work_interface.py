@@ -8,7 +8,6 @@ from src.application.interfaces.repositories.product_repository_interface import
 from src.application.interfaces.repositories.shift_repository_interface import IShiftRepository
 from src.application.interfaces.repositories.task_repository_interface import ITaskRepository
 from src.application.interfaces.repositories.work_center_repository_interface import IWorkCenterRepository
-from src.infrastructure.configurations.database import BaseModel
 
 
 class IUnitOfWork(ABC):

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
+from src.application.interfaces.repositories.repository_interface import IRepository
 from src.domain.entities.work_center import WorkCenter
-from src.infrastructure.common.base_repository import IRepository
 
 
 class IWorkCenterRepository(IRepository, ABC):

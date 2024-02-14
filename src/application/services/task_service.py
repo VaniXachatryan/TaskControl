@@ -11,11 +11,7 @@ from src.application.common.results.task_result import TaskResultWithProductIdsR
 from src.application.common.results.work_center_result import WorkCenterResult
 from src.application.interfaces.services.task_service_interface import ITaskService
 from src.application.interfaces.unit_of_work_interface import IUnitOfWork
-from src.domain.common.errors.batch_errors import BatchErrors
-from src.domain.common.errors.brigade_errors import BrigadeErrors
-from src.domain.common.errors.line_errors import LineErrors
 from src.domain.common.errors.task_errors import TaskErrors
-from src.domain.common.errors.work_center_errors import WorkCenterErrors
 from src.domain.entities.batch import Batch
 from src.domain.entities.brigade import Brigade
 from src.domain.entities.line import Line

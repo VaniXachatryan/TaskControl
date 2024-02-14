@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+from src.application.interfaces.repositories.repository_interface import IRepository
 from src.domain.entities.shift import Shift
-from src.infrastructure.common.base_repository import IRepository
 
 
 class IShiftRepository(IRepository, ABC):
