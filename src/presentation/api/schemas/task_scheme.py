@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 
 from pydantic import BaseModel, Field
@@ -34,7 +34,7 @@ class TaskSchemeAdd(BaseModel):
     shift: str = Field(alias="Смена")
     brigade: str = Field(alias="Бригада")
     batch_number: int = Field(alias="НомерПартии")
-    batch_date: datetime = Field(alias="ДатаПартии")
+    batch_date: date = Field(alias="ДатаПартии")
     nomenclature: str = Field(alias="Номенклатура")
     ekn_code: str = Field(alias="КодЕКН")
     work_center_code: str = Field(alias="ИдентификаторРЦ")
@@ -49,7 +49,22 @@ class TaskSchemeUpdate(BaseModel):
     shift: Optional[str] = Field(default=None)
     brigade: Optional[str] = Field(default=None)
     batch_number: Optional[int] = Field(default=None)
-    batch_date: Optional[datetime] = Field(default=None)
+    batch_date: Optional[date] = Field(default=None)
+    nomenclature: Optional[str] = Field(default=None)
+    ekn_code: Optional[str] = Field(default=None)
+    work_center_code: Optional[str] = Field(default=None)
+    shift_start_date: Optional[datetime] = Field(default=None)
+    shift_end_date: Optional[datetime] = Field(default=None)
+
+
+class TaskSchemeFilter(BaseModel):
+    is_closed: Optional[bool] = Field(default=None)
+    title: Optional[str] = Field(default=None)
+    line_code: Optional[str] = Field(default=None)
+    shift: Optional[str] = Field(default=None)
+    brigade: Optional[str] = Field(default=None)
+    batch_number: Optional[int] = Field(default=None)
+    batch_date: Optional[date] = Field(default=None)
     nomenclature: Optional[str] = Field(default=None)
     ekn_code: Optional[str] = Field(default=None)
     work_center_code: Optional[str] = Field(default=None)

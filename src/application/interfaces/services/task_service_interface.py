@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from returns.result import Result
 
-from src.application.common.results.task_result import TaskResultWithProductIdsResult
+from src.application.common.results.task_result import TaskResultWithProductIdsResult, TaskResult
 from src.domain.entities.task import Task
 
 
@@ -32,3 +32,14 @@ class ITaskService(ABC):
             -> Result[TaskResultWithProductIdsResult, str]:
         pass
 
+    @abstractmethod
+    async def get_by_filters(
+            self, is_closed: Optional[bool] = None, line_code: Optional[str] = None,
+            task_title: Optional[str] = None, shift_number: Optional[str] = None,
+            brigade_title: Optional[str] = None, batch_number: Optional[int] = None,
+            batch_date: Optional[datetime] = None, nomenclature: Optional[str] = None,
+            ekn_code: Optional[str] = None, work_center_code: Optional[str] = None,
+            shift_start_date: Optional[datetime] = None, shift_end_date: Optional[datetime] = None,
+            count: int = 15, page: int = 1
+    ) -> Result[List[TaskResult], str]:
+        pass

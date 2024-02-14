@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date as onlydate
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,7 +11,7 @@ class Batch(BaseModel):
     __tablename__ = "batches"
 
     number: Mapped[int]
-    date: Mapped[datetime]
+    date: Mapped[onlydate]
     line_id: Mapped[int] = mapped_column(ForeignKey(Line.id))
 
     line = relationship(Line, lazy="joined")

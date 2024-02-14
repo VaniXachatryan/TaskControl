@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from returns.result import Result, Success, Failure
 
@@ -21,6 +21,7 @@ from src.domain.entities.work_center import WorkCenter
 
 
 class TaskService(ITaskService):
+
     def __init__(self, uow: IUnitOfWork):
         self.uow: IUnitOfWork = uow
 
@@ -178,3 +179,42 @@ class TaskService(ITaskService):
             ekn_code=task.ekn_code,
             work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code)
         ))
+
+    async def get_by_filters(
+            self, is_closed: Optional[bool] = None, line_code: Optional[str] = None,
+            task_title: Optional[str] = None, shift_number: Optional[str] = None,
+            brigade_title: Optional[str] = None, batch_number: Optional[int] = None,
+            batch_date: Optional[datetime] = None, nomenclature: Optional[str] = None,
+            ekn_code: Optional[str] = None, work_center_code: Optional[str] = None,
+            shift_start_date: Optional[datetime] = None, shift_end_date: Optional[datetime] = None,
+            count: int = 15, page: int = 1
+    ) -> Result[List[TaskResult], str]:
+        tasks = await self.uow.tasks.get_list_by_filters(
+            is_closed=is_closed,
+            line_code=line_code,
+            task_title=task_title,
+            shift_number=shift_number,
+            shift_start_at=shift_start_date,
+            shift_end_at=shift_end_date,
+            brigade_title=brigade_title,
+            batch_number=batch_number,
+            batch_date=batch_date,
+            nomenclature=nomenclature,
+            ekn_code=ekn_code,
+            work_center_code=work_center_code,
+            limit=count, offset=(page-1)*count
+        )
+
+        return Success([TaskResult(
+            id=task.id,
+            is_closed=task.is_closed,
+            title=task.title,
+            line=LineResult(id=task.line.id, code=task.line.code),
+            shift=ShiftResult(id=task.shift.id, number=task.shift.number,
+                              start_at=task.shift.start_at, end_at=task.shift.end_at),
+            brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
+            batch=BatchResult(id=task.batch.id, number=task.batch.number, date=task.batch.date),
+            nomenclature=task.nomenclature,
+            ekn_code=task.ekn_code,
+            work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code)
+        ) for task in tasks])
