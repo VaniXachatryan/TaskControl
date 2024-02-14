@@ -40,76 +40,76 @@ class TaskService(ITaskService):
             shift_start_date: datetime,
             shift_end_date: Optional[datetime]
     ) -> Result[TaskResult, str]:
+        async with self.uow:
+            batch_date = batch_date.replace(tzinfo=None)
+            shift_start_date = shift_start_date.replace(tzinfo=None)
+            shift_end_date = shift_end_date.replace(tzinfo=None)
+            line: Line = await self.uow.lines.get_or_create_by_code(code=line_code)
+            batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(number=batch_number, date=batch_date,
+                                                                                   line_id=line.id)
+            work_center: WorkCenter = await self.uow.work_centers.get_or_create_by_code(code=work_center_code)
+            shift: Shift = await self.uow.shifts.get_or_create_by_number(start_at=shift_start_date,
+                                                                         end_at=shift_end_date, number=shift)
+            brigade: Brigade = await self.uow.brigades.get_or_create_by_title(title=brigade_title)
 
-        batch_date = batch_date.replace(tzinfo=None)
-        shift_start_date = shift_start_date.replace(tzinfo=None)
-        shift_end_date = shift_end_date.replace(tzinfo=None)
-        line: Line = await self.uow.lines.get_or_create_by_code(code=line_code)
-        batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(number=batch_number, date=batch_date,
-                                                                               line_id=line.id)
-        work_center: WorkCenter = await self.uow.work_centers.get_or_create_by_code(code=work_center_code)
-        shift: Shift = await self.uow.shifts.get_or_create_by_number(start_at=shift_start_date,
-                                                                     end_at=shift_end_date, number=shift)
-        brigade: Brigade = await self.uow.brigades.get_or_create_by_title(title=brigade_title)
+            task: Task = await self.uow.tasks.get_by_batch_id(batch_id=batch.id) or Task()
 
-        task: Task = await self.uow.tasks.get_by_batch_id(batch_id=batch.id) or Task()
+            task.line = line
+            task.title = task_title
+            task.is_closed = is_closed
+            task.closed_at = None
+            task.work_center = work_center
+            task.shift = shift
+            task.brigade = brigade
+            task.batch = batch
+            task.nomenclature = nomenclature
+            task.ekn_code = ekn_code
 
-        task.line = line
-        task.title = task_title
-        task.is_closed = is_closed
-        task.closed_at = None
-        task.work_center = work_center
-        task.shift = shift
-        task.brigade = brigade
-        task.batch = batch
-        task.nomenclature = nomenclature
-        task.ekn_code = ekn_code
+            if task.id is None:
+                await self.uow.tasks.create(entity=task)
+            else:
+                await self.uow.tasks.update(entity=task)
 
-        if task.id is None:
-            await self.uow.tasks.create(entity=task)
-        else:
-            await self.uow.tasks.update(entity=task)
+            await self.uow.commit()
 
-        await self.uow.commit()
-
-        return Success(TaskResult(
-            id=task.id or 0,
-            is_closed=task.is_closed,
-            title=task.title,
-            line=LineResult(id=line.id, code=line.code),
-            shift=ShiftResult(id=shift.id, number=shift.number,
-                              start_at=shift.start_at, end_at=shift.end_at),
-            brigade=BrigadeResult(id=brigade.id, title=brigade.title),
-            batch=BatchResult(id=batch.id, number=batch.number, date=batch.date),
-            nomenclature=task.nomenclature,
-            ekn_code=task.ekn_code,
-            work_center=WorkCenterResult(id=work_center.id, code=work_center.code)
-        ))
+            return Success(TaskResult(
+                id=task.id or 0,
+                is_closed=task.is_closed,
+                title=task.title,
+                line=LineResult(id=line.id, code=line.code),
+                shift=ShiftResult(id=shift.id, number=shift.number,
+                                  start_at=shift.start_at, end_at=shift.end_at),
+                brigade=BrigadeResult(id=brigade.id, title=brigade.title),
+                batch=BatchResult(id=batch.id, number=batch.number, date=batch.date),
+                nomenclature=task.nomenclature,
+                ekn_code=task.ekn_code,
+                work_center=WorkCenterResult(id=work_center.id, code=work_center.code)
+            ))
 
     async def get_by_id_with_product_id(self, task_id: str) -> Result[TaskResultWithProductIdsResult, str]:
+        async with self.uow:
+            task: Task | None = await self.uow.tasks.get_by_id(entity_id=task_id)
+            if task is None:
+                return Failure(TaskErrors.not_found)
 
-        task: Task | None = await self.uow.tasks.get_by_id(entity_id=task_id)
-        if task is None:
-            return Failure(TaskErrors.not_found)
+            products = await self.uow.products.get_ids_list_by_batch_id(batch_id=task.batch_id)
 
-        products = await self.uow.products.get_ids_list_by_batch_id(batch_id=task.batch_id)
+            result: TaskResultWithProductIdsResult = TaskResultWithProductIdsResult(
+                id=task.id,
+                is_closed=task.is_closed,
+                title=task.title,
+                line=LineResult(id=task.line.id, code=task.line.code),
+                shift=ShiftResult(id=task.shift.id, number=task.shift.number,
+                                  start_at=task.shift.start_at, end_at=task.shift.end_at),
+                brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
+                batch=BatchResult(id=task.batch.id, number=task.batch.number, date=task.batch.date),
+                nomenclature=task.nomenclature,
+                ekn_code=task.ekn_code,
+                work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code),
+                products=products
+            )
 
-        result: TaskResultWithProductIdsResult = TaskResultWithProductIdsResult(
-            id=task.id,
-            is_closed=task.is_closed,
-            title=task.title,
-            line=LineResult(id=task.line.id, code=task.line.code),
-            shift=ShiftResult(id=task.shift.id, number=task.shift.number,
-                              start_at=task.shift.start_at, end_at=task.shift.end_at),
-            brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
-            batch=BatchResult(id=task.batch.id, number=task.batch.number, date=task.batch.date),
-            nomenclature=task.nomenclature,
-            ekn_code=task.ekn_code,
-            work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code),
-            products=products
-        )
-
-        return Success(result)
+            return Success(result)
 
     async def update(
             self,
@@ -128,57 +128,58 @@ class TaskService(ITaskService):
             shift_end_date: Optional[datetime]
     ) -> Result[TaskResult, str]:
 
-        task: Task | None = await self.uow.tasks.get_by_id(entity_id=task_id)
+        async with self.uow:
+            task: Task | None = await self.uow.tasks.get_by_id(entity_id=task_id)
 
-        if task is None:
-            return Failure(TaskErrors.not_found)
+            if task is None:
+                return Failure(TaskErrors.not_found)
 
-        batch_date = batch_date.replace(tzinfo=None) if batch_date is not None else task.batch.date
-        shift_start_date = shift_start_date.replace(tzinfo=None) if shift_start_date is not None else task.shift.start_at
-        shift_end_date = shift_end_date.replace(tzinfo=None) if shift_end_date is not None else task.shift.end_at
+            batch_date = batch_date.replace(tzinfo=None) if batch_date is not None else task.batch.date
+            shift_start_date = shift_start_date.replace(tzinfo=None) if shift_start_date is not None else task.shift.start_at
+            shift_end_date = shift_end_date.replace(tzinfo=None) if shift_end_date is not None else task.shift.end_at
 
-        line: Line = await self.uow.lines.get_or_create_by_code(code=line_code) if line_code else task.line
-        batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(
-            number=batch_number,
-            date=batch_date,
-            line_id=line.id) if batch_number and batch_date else task.batch
-        work_center: WorkCenter = await self.uow.work_centers.get_or_create_by_code(
-            code=work_center_code) if work_center_code else task.work_center
-        shift: Shift = await self.uow.shifts.get_or_create_by_number(
-            start_at=shift_start_date,
-            end_at=shift_end_date,
-            number=shift) if shift else task.shift
-        brigade: Brigade = await self.uow.brigades.get_or_create_by_title(
-            title=brigade_title) if brigade_title else task.brigade
+            line: Line = await self.uow.lines.get_or_create_by_code(code=line_code) if line_code else task.line
+            batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(
+                number=batch_number,
+                date=batch_date,
+                line_id=line.id) if batch_number and batch_date else task.batch
+            work_center: WorkCenter = await self.uow.work_centers.get_or_create_by_code(
+                code=work_center_code) if work_center_code else task.work_center
+            shift: Shift = await self.uow.shifts.get_or_create_by_number(
+                start_at=shift_start_date,
+                end_at=shift_end_date,
+                number=shift) if shift else task.shift
+            brigade: Brigade = await self.uow.brigades.get_or_create_by_title(
+                title=brigade_title) if brigade_title else task.brigade
 
-        task.line = line
-        task.title = task_title if task_title is not None else task.title
-        task.is_closed = is_closed if is_closed is not None else task.is_closed
-        task.closed_at = datetime.utcnow() if task.is_closed is True else None
-        task.work_center = work_center
-        task.shift = shift
-        task.brigade = brigade
-        task.batch = batch
-        task.nomenclature = nomenclature if nomenclature is not None else task.nomenclature
-        task.ekn_code = ekn_code if ekn_code is not None else task.ekn_code
+            task.line = line
+            task.title = task_title if task_title is not None else task.title
+            task.is_closed = is_closed if is_closed is not None else task.is_closed
+            task.closed_at = datetime.utcnow() if task.is_closed is True else None
+            task.work_center = work_center
+            task.shift = shift
+            task.brigade = brigade
+            task.batch = batch
+            task.nomenclature = nomenclature if nomenclature is not None else task.nomenclature
+            task.ekn_code = ekn_code if ekn_code is not None else task.ekn_code
 
-        await self.uow.tasks.update(entity=task)
+            await self.uow.tasks.update(entity=task)
 
-        await self.uow.commit()
+            await self.uow.commit()
 
-        return Success(TaskResult(
-            id=task.id,
-            is_closed=task.is_closed,
-            title=task.title,
-            line=LineResult(id=task.line.id, code=task.line.code),
-            shift=ShiftResult(id=task.shift.id, number=task.shift.number,
-                              start_at=task.shift.start_at, end_at=task.shift.end_at),
-            brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
-            batch=BatchResult(id=task.batch.id, number=task.batch.number, date=task.batch.date),
-            nomenclature=task.nomenclature,
-            ekn_code=task.ekn_code,
-            work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code)
-        ))
+            return Success(TaskResult(
+                id=task.id,
+                is_closed=task.is_closed,
+                title=task.title,
+                line=LineResult(id=task.line.id, code=task.line.code),
+                shift=ShiftResult(id=task.shift.id, number=task.shift.number,
+                                  start_at=task.shift.start_at, end_at=task.shift.end_at),
+                brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
+                batch=BatchResult(id=task.batch.id, number=task.batch.number, date=task.batch.date),
+                nomenclature=task.nomenclature,
+                ekn_code=task.ekn_code,
+                work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code)
+            ))
 
     async def get_by_filters(
             self, is_closed: Optional[bool] = None, line_code: Optional[str] = None,
@@ -189,32 +190,33 @@ class TaskService(ITaskService):
             shift_start_date: Optional[datetime] = None, shift_end_date: Optional[datetime] = None,
             count: int = 15, page: int = 1
     ) -> Result[List[TaskResult], str]:
-        tasks = await self.uow.tasks.get_list_by_filters(
-            is_closed=is_closed,
-            line_code=line_code,
-            task_title=task_title,
-            shift_number=shift_number,
-            shift_start_at=shift_start_date,
-            shift_end_at=shift_end_date,
-            brigade_title=brigade_title,
-            batch_number=batch_number,
-            batch_date=batch_date,
-            nomenclature=nomenclature,
-            ekn_code=ekn_code,
-            work_center_code=work_center_code,
-            limit=count, offset=(page-1)*count
-        )
+        async with self.uow:
+            tasks = await self.uow.tasks.get_list_by_filters(
+                is_closed=is_closed,
+                line_code=line_code,
+                task_title=task_title,
+                shift_number=shift_number,
+                shift_start_at=shift_start_date,
+                shift_end_at=shift_end_date,
+                brigade_title=brigade_title,
+                batch_number=batch_number,
+                batch_date=batch_date,
+                nomenclature=nomenclature,
+                ekn_code=ekn_code,
+                work_center_code=work_center_code,
+                limit=count, offset=(page-1)*count
+            )
 
-        return Success([TaskResult(
-            id=task.id,
-            is_closed=task.is_closed,
-            title=task.title,
-            line=LineResult(id=task.line.id, code=task.line.code),
-            shift=ShiftResult(id=task.shift.id, number=task.shift.number,
-                              start_at=task.shift.start_at, end_at=task.shift.end_at),
-            brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
-            batch=BatchResult(id=task.batch.id, number=task.batch.number, date=task.batch.date),
-            nomenclature=task.nomenclature,
-            ekn_code=task.ekn_code,
-            work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code)
-        ) for task in tasks])
+            return Success([TaskResult(
+                id=task.id,
+                is_closed=task.is_closed,
+                title=task.title,
+                line=LineResult(id=task.line.id, code=task.line.code),
+                shift=ShiftResult(id=task.shift.id, number=task.shift.number,
+                                  start_at=task.shift.start_at, end_at=task.shift.end_at),
+                brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
+                batch=BatchResult(id=task.batch.id, number=task.batch.number, date=task.batch.date),
+                nomenclature=task.nomenclature,
+                ekn_code=task.ekn_code,
+                work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code)
+            ) for task in tasks])

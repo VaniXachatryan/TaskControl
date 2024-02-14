@@ -1,3 +1,5 @@
+import asyncio
+
 from sqlalchemy.exc import PendingRollbackError
 
 from src.application.interfaces.repositories.batch_repository_interface import IBatchRepository
@@ -20,7 +22,10 @@ from src.infrastructure.repositories.work_center_repository import WorkCenterRep
 
 class UnitOfWork(IUnitOfWork):
     def __init__(self):
-        self.session = async_session_maker()
+        self.session_factory = async_session_maker
+
+    async def __aenter__(self):
+        self.session = self.session_factory()
 
         self.tasks: ITaskRepository = TaskRepository(self.session)
         self.batches: IBatchRepository = BatchRepository(self.session)
@@ -30,19 +35,15 @@ class UnitOfWork(IUnitOfWork):
         self.shifts: IShiftRepository = ShiftRepository(self.session)
         self.products: IProductRepository = ProductRepository(self.session)
 
+    async def __aexit__(self, *args):
+        await self.rollback()
+        await self.session.close()
+
     async def commit(self):
-        try:
-            await self.session.commit()
-        except PendingRollbackError:
-            await self.rollback()
-        finally:
-            await self.session.close()
+        await self.session.commit()
 
     async def flush(self):
         await self.session.flush()
 
     async def rollback(self):
         await self.session.rollback()
-
-    def __del__(self):
-        self.session.delete()
