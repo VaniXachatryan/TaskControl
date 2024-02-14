@@ -3,6 +3,7 @@ from returns.result import Result, Success, Failure
 
 from src.application.common.results.task_result import TaskResultWithProductIdsResult, TaskResult
 from src.domain.common.errors.task_errors import TaskErrors
+from src.presentation.api.common.models.error_response import ErrorResponse
 from src.presentation.api.depends import TaskServiceDepend
 from src.presentation.api.mapper.task_mapper import (task_result_to_task_scheme,
                                                      task_with_product_ids_result_to_task_with_product_scheme)
@@ -46,7 +47,7 @@ async def get_by_id(task_service: TaskServiceDepend, id: int, response: Response
 
         case Failure(TaskErrors.not_found):
             response.status_code = status.HTTP_404_NOT_FOUND
-            return HTTPException(status_code=404, detail="Сменное задание не найдено.")
+            return ErrorResponse(status_code=404, detail="Сменное задание не найдено.")
 
 
 @router.patch("/update")
@@ -73,4 +74,4 @@ async def update_task(task_service: TaskServiceDepend, scheme: TaskSchemeUpdate,
 
         case Failure(TaskErrors.not_found):
             response.status_code = status.HTTP_404_NOT_FOUND
-            return HTTPException(status_code=404, detail="Сменное задание не найдено.")
+            return ErrorResponse(status_code=404, detail="Сменное задание не найдено.")
