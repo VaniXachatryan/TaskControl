@@ -9,18 +9,17 @@ from src.infrastructure.common.base_repository import BaseRepository
 
 
 class ShiftRepository(BaseRepository, IShiftRepository):
-    model = Shift
 
     def __init__(self, session: AsyncSession):
-        super().__init__(session)
+        super().__init__(session=session, entity=Shift)
 
     async def get_by_number(self, number: int) -> Shift | None:
-        query = select(self.model).where(self.model.number == number)
+        query = select(Shift).where(Shift.number == number)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_or_create_by_number(self, number: int, start_at: datetime, end_at: datetime = None) -> Shift:
-        query = select(self.model).where(self.model.number == number)
+        query = select(Shift).where(Shift.number == number)
         result = await self.session.execute(query)
         result = result.scalar_one_or_none()
 

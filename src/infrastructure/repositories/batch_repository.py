@@ -9,24 +9,23 @@ from src.infrastructure.common.base_repository import BaseRepository
 
 
 class BatchRepository(BaseRepository, IBatchRepository):
-    model = Batch
 
     def __init__(self, session: AsyncSession):
-        super().__init__(session)
+        super().__init__(session=session, entity=Batch)
 
     async def get_by_number_and_date(self, number: int, date: datetime, line_id: int) -> Batch | None:
-        query = (select(self.model)
-                 .where(self.model.number == number)
-                 .where(self.model.line_id == line_id)
-                 .where(self.model.date == date))
+        query = (select(Batch)
+                 .where(Batch.number == number)
+                 .where(Batch.line_id == line_id)
+                 .where(Batch.date == date))
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_or_create_by_number_and_date(self, number: int, date: datetime, line_id: int) -> Batch:
-        query = (select(self.model)
-                 .where(self.model.line_id == line_id)
-                 .where(self.model.number == number)
-                 .where(self.model.date == date))
+        query = (select(Batch)
+                 .where(Batch.line_id == line_id)
+                 .where(Batch.number == number)
+                 .where(Batch.date == date))
         result = await self.session.execute(query)
         result = result.scalar_one_or_none()
 

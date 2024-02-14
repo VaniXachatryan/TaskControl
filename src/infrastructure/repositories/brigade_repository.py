@@ -7,18 +7,17 @@ from src.infrastructure.common.base_repository import BaseRepository
 
 
 class BrigadeRepository(BaseRepository, IBrigadeRepository):
-    model = Brigade
 
     def __init__(self, session: AsyncSession):
-        super().__init__(session)
+        super().__init__(session=session, entity=Brigade)
 
     async def get_by_title(self, title: str) -> Brigade | None:
-        query = select(self.model).where(self.model.title == title)
+        query = select(Brigade).where(Brigade.title == title)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_or_create_by_title(self, title: str) -> Brigade:
-        query = select(self.model).where(self.model.title == title)
+        query = select(Brigade).where(Brigade.title == title)
         result = await self.session.execute(query)
         result = result.scalar_one_or_none()
 
