@@ -1,6 +1,6 @@
 from sqlalchemy.orm import mapped_column, Mapped
 
-from src.infrastructure.configurations.database import BaseModel
+from src.domain.common.base_model import BaseModel
 
 
 class Line(BaseModel):

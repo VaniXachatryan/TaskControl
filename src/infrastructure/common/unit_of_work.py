@@ -6,9 +6,9 @@ from src.application.interfaces.repositories.line_repository_interface import IL
 from src.application.interfaces.repositories.product_repository_interface import IProductRepository
 from src.application.interfaces.repositories.shift_repository_interface import IShiftRepository
 from src.application.interfaces.repositories.work_center_repository_interface import IWorkCenterRepository
-from src.infrastructure.configurations.database import async_session_maker, BaseModel
 from src.application.interfaces.repositories.task_repository_interface import ITaskRepository
 from src.application.interfaces.unit_of_work_interface import IUnitOfWork
+from src.infrastructure.configurations.database import async_session_maker
 from src.infrastructure.repositories.batch_repository import BatchRepository
 from src.infrastructure.repositories.brigade_repository import BrigadeRepository
 from src.infrastructure.repositories.line_repository import LineRepository

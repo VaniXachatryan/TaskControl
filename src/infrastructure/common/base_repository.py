@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.repositories.repository_interface import IRepository
-from src.infrastructure.configurations.database import BaseModel
+from src.domain.common.base_model import BaseModel
 
 
 class BaseRepository(IRepository):

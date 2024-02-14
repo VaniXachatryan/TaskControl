@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.infrastructure.configurations.database import BaseModel
+from src.domain.common.base_model import BaseModel
 from src.domain.entities.brigade import Brigade
 from src.domain.entities.batch import Batch
 from src.domain.entities.line import Line

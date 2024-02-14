@@ -1,8 +1,8 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
+from src.domain.common.base_model import BaseModel
 from src.domain.entities.batch import Batch
-from src.infrastructure.configurations.database import BaseModel
 
 
 class Product(BaseModel):
