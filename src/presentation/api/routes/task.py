@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, status
 from returns.result import Result, Success, Failure
 
 from src.application.common.results.task_result import TaskResultWithProductIdsResult, TaskResult
@@ -37,7 +37,7 @@ async def create_task(task_service: TaskServiceDepend, scheme: TaskSchemeAdd):
 
 
 @router.get("/get_with_products", status_code=200)
-async def get_by_id(task_service: TaskServiceDepend, id: int):
+async def get_by_id(task_service: TaskServiceDepend, id: int, response: Response):
     result: Result[TaskResultWithProductIdsResult, str] = await task_service.get_by_id_with_product_id(task_id=id)
 
     match result:
@@ -45,11 +45,12 @@ async def get_by_id(task_service: TaskServiceDepend, id: int):
             return task_with_product_ids_result_to_task_with_product_scheme(value)
 
         case Failure(TaskErrors.not_found):
+            response.status_code = status.HTTP_404_NOT_FOUND
             return HTTPException(status_code=404, detail="Сменное задание не найдено.")
 
 
 @router.patch("/update")
-async def update_task(task_service: TaskServiceDepend, scheme: TaskSchemeUpdate, id: int):
+async def update_task(task_service: TaskServiceDepend, scheme: TaskSchemeUpdate, id: int, response: Response):
     result: Result[TaskResult, str] = await task_service.update(
         task_id=id,
         is_closed=scheme.is_closed,
@@ -71,4 +72,5 @@ async def update_task(task_service: TaskServiceDepend, scheme: TaskSchemeUpdate,
             return task_result_to_task_scheme(value)
 
         case Failure(TaskErrors.not_found):
+            response.status_code = status.HTTP_404_NOT_FOUND
             return HTTPException(status_code=404, detail="Сменное задание не найдено.")
