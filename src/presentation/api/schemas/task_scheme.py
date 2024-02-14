@@ -40,3 +40,18 @@ class TaskSchemeAdd(BaseModel):
     work_center_code: str = Field(alias="ИдентификаторРЦ")
     shift_start_date: datetime = Field(alias="ДатаВремяНачалаСмены")
     shift_end_date: Optional[datetime] = Field(alias="ДатаВремяОкончанияСмены")
+
+
+class TaskSchemeUpdate(BaseModel):
+    is_closed: Optional[bool] = Field(default=None)
+    title: Optional[str] = Field(default=None)
+    line_code: Optional[str] = Field(default=None)
+    shift: Optional[str] = Field(default=None)
+    brigade: Optional[str] = Field(default=None)
+    batch_number: Optional[int] = Field(default=None)
+    batch_date: Optional[datetime] = Field(default=None)
+    nomenclature: Optional[str] = Field(default=None)
+    ekn_code: Optional[str] = Field(default=None)
+    work_center_code: Optional[str] = Field(default=None)
+    shift_start_date: Optional[datetime] = Field(default=None)
+    shift_end_date: Optional[datetime] = Field(default=None)

@@ -109,3 +109,72 @@ class TaskService(ITaskService):
         )
 
         return Success(result)
+
+    async def update(
+            self,
+            task_id: int,
+            is_closed: Optional[bool],
+            task_title: Optional[str],
+            line_code: Optional[str],
+            shift: Optional[str],
+            brigade_title: Optional[str],
+            batch_number: Optional[int],
+            batch_date: Optional[datetime],
+            nomenclature: Optional[str],
+            ekn_code: Optional[str],
+            work_center_code: Optional[str],
+            shift_start_date: Optional[datetime],
+            shift_end_date: Optional[datetime]
+    ) -> Result[TaskResult, str]:
+
+        task: Task | None = await self.uow.tasks.get_by_id(entity_id=task_id)
+
+        if task is None:
+            return Failure(TaskErrors.not_found)
+
+        batch_date = batch_date.replace(tzinfo=None) if batch_date is not None else task.batch.date
+        shift_start_date = shift_start_date.replace(tzinfo=None) if shift_start_date is not None else task.shift.start_at
+        shift_end_date = shift_end_date.replace(tzinfo=None) if shift_end_date is not None else task.shift.end_at
+
+        line: Line = await self.uow.lines.get_or_create_by_code(code=line_code) if line_code else task.line
+        batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(
+            number=batch_number,
+            date=batch_date,
+            line_id=line.id) if batch_number and batch_date else task.batch
+        work_center: WorkCenter = await self.uow.work_centers.get_or_create_by_code(
+            code=work_center_code) if work_center_code else task.work_center
+        shift: Shift = await self.uow.shifts.get_or_create_by_number(
+            start_at=shift_start_date,
+            end_at=shift_end_date,
+            number=shift) if shift else task.shift
+        brigade: Brigade = await self.uow.brigades.get_or_create_by_title(
+            title=brigade_title) if brigade_title else task.brigade
+
+        task.line = line
+        task.title = task_title if task_title is not None else task.title
+        task.is_closed = is_closed if is_closed is not None else task.is_closed
+        task.closed_at = datetime.utcnow() if task.is_closed is True else None
+        task.work_center = work_center
+        task.shift = shift
+        task.brigade = brigade
+        task.batch = batch
+        task.nomenclature = nomenclature if nomenclature is not None else task.nomenclature
+        task.ekn_code = ekn_code if ekn_code is not None else task.ekn_code
+
+        await self.uow.tasks.update(entity=task)
+
+        await self.uow.commit()
+
+        return Success(TaskResult(
+            id=task.id,
+            is_closed=task.is_closed,
+            title=task.title,
+            line=LineResult(id=task.line.id, code=task.line.code),
+            shift=ShiftResult(id=task.shift.id, number=task.shift.number,
+                              start_at=task.shift.start_at, end_at=task.shift.end_at),
+            brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
+            batch=BatchResult(id=task.batch.id, number=task.batch.number, date=task.batch.date),
+            nomenclature=task.nomenclature,
+            ekn_code=task.ekn_code,
+            work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code)
+        ))
