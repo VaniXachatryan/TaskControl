@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 
 from returns.result import Result
 
+from src.application.common.results.product_result import ProductResult
+
 
 class IProductService(ABC):
     @abstractmethod
-    async def add(self, code: str, batch_number: int, batch_date) -> Result:
+    async def add(self, code: str, batch_number: int, batch_date) -> Result[ProductResult, str]:
         pass
 
     @abstractmethod
-    async def aggregate(self) -> Result:
+    async def aggregate(self, code: str, batch_id: int) -> Result[ProductResult, list]:
         pass

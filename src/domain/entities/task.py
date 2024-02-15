@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.domain.common.base_model import BaseModel
@@ -17,7 +17,7 @@ class Task(BaseModel):
     line_id: Mapped[int] = mapped_column(ForeignKey(Line.id))
     title: Mapped[str]
     is_closed: Mapped[bool] = mapped_column(default=False)
-    closed_at: Mapped[datetime] = mapped_column(nullable=True)
+    closed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     work_center_id: Mapped[int] = mapped_column(ForeignKey(WorkCenter.id))
     shift_id: Mapped[str] = mapped_column(ForeignKey(Shift.id))
     brigade_id: Mapped[int] = mapped_column(ForeignKey(Brigade.id))

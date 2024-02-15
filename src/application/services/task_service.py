@@ -41,8 +41,6 @@ class TaskService(ITaskService):
             shift_end_date: Optional[datetime]
     ) -> Result[TaskResult, str]:
         async with self.uow:
-            shift_start_date = shift_start_date.replace(tzinfo=None)
-            shift_end_date = shift_end_date.replace(tzinfo=None)
             line: Line = await self.uow.lines.get_or_create_by_code(code=line_code)
             batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(number=batch_number, date=batch_date,
                                                                                    line_id=line.id)
@@ -133,21 +131,25 @@ class TaskService(ITaskService):
             if task is None:
                 return Failure(TaskErrors.not_found)
 
-            batch_date = batch_date.replace(tzinfo=None) if batch_date is not None else task.batch.date
-            shift_start_date = shift_start_date.replace(tzinfo=None) if shift_start_date is not None else task.shift.start_at
-            shift_end_date = shift_end_date.replace(tzinfo=None) if shift_end_date is not None else task.shift.end_at
+            batch_date = batch_date if batch_date is not None else task.batch.date
+            shift_start_date = shift_start_date if shift_start_date is not None else task.shift.start_at
+            shift_end_date = shift_end_date if shift_end_date is not None else task.shift.end_at
 
             line: Line = await self.uow.lines.get_or_create_by_code(code=line_code) if line_code else task.line
+
             batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(
                 number=batch_number,
                 date=batch_date,
                 line_id=line.id) if batch_number and batch_date else task.batch
+
             work_center: WorkCenter = await self.uow.work_centers.get_or_create_by_code(
                 code=work_center_code) if work_center_code else task.work_center
+
             shift: Shift = await self.uow.shifts.get_or_create_by_number(
                 start_at=shift_start_date,
                 end_at=shift_end_date,
                 number=shift) if shift else task.shift
+
             brigade: Brigade = await self.uow.brigades.get_or_create_by_title(
                 title=brigade_title) if brigade_title else task.brigade
 

@@ -15,8 +15,8 @@ router = APIRouter(
 )
 
 
-@router.post("/add", status_code=200)
-async def add(product_service: ProductServiceDepend, scheme: ProductSchemeAdd, response: Response):
+@router.post("/create", status_code=200)
+async def create(product_service: ProductServiceDepend, scheme: ProductSchemeAdd, response: Response):
     result: ProductResult = await product_service.add(code=scheme.code,
                                                       batch_number=scheme.batch_number,
                                                       batch_date=scheme.batch_date)
@@ -32,7 +32,19 @@ async def add(product_service: ProductServiceDepend, scheme: ProductSchemeAdd, r
             return ErrorResponse(status_code=404, detail="Партии с такими параметрами не существует.")
 
 
+@router.patch("/aggregate", status_code=200)
+async def add(product_service: ProductServiceDepend, batch_id: int, product_code: str, response: Response):
+    result: ProductResult = await product_service.aggregate(code=product_code, batch_id=batch_id)
 
-@router.post("/aggregate", status_code=200)
-async def add(product_service: ProductServiceDepend):
-    pass
+    match result:
+        case Success(value):
+            return "Aggregated!"
+        case Failure([ProductErrors.not_found]):
+            response.status_code = status.HTTP_404_NOT_FOUND
+            return ErrorResponse(status_code=404, detail="Код продукта не найден.")
+        case Failure([ProductErrors.code_attached_to_another_batch]):
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return ErrorResponse(status_code=400, detail="unique code is attached to another batch")
+        case Failure([ProductErrors.is_aggregated, value]):
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return ErrorResponse(status_code=400, detail=f"unique code already used at {value}")

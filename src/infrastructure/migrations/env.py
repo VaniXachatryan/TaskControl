@@ -5,7 +5,16 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from src.infrastructure.configurations.database import BaseModel
+from src.domain.common.base_model import BaseModel
+
+from src.domain.entities.batch import Batch
+from src.domain.entities.shift import Shift
+from src.domain.entities.line import Line
+from src.domain.entities.brigade import Brigade
+from src.domain.entities.work_center import WorkCenter
+from src.domain.entities.product import Product
+from src.domain.entities.task import Task
+
 from src.infrastructure.configurations.environments import DB_HOST, DB_PASS, DB_USER, DB_PORT, DB_NAME
 
 # this is the Alembic Config object, which provides

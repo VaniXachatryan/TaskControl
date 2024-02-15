@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from returns.result import Result, Failure, Success
 
@@ -44,5 +44,22 @@ class ProductService(IProductService):
                 )
             )
 
-    async def aggregate(self) -> Result:
-        pass
+    async def aggregate(self, code: str, batch_id: int) -> Result[ProductResult, list]:
+        async with self.uow:
+            product: Product | None = await self.uow.products.get_by_code(code=code)
+            if product is None:
+                return Failure([ProductErrors.not_found])
+
+            if product.batch.id != batch_id:
+                return Failure([ProductErrors.code_attached_to_another_batch])
+
+            if product.is_aggregated is True:
+                return Failure([ProductErrors.is_aggregated, product.aggregated_at])
+
+            product.is_aggregated = True
+            product.aggregated_at = datetime.now()
+
+            await self.uow.products.update(entity=product)
+            await self.uow.commit()
+
+            return Success(True)

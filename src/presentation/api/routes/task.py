@@ -81,14 +81,14 @@ async def update_task(task_service: TaskServiceDepend, scheme: TaskSchemeUpdate,
 
 
 @router.get("/get_by_filters")
-async def update_task(task_service: TaskServiceDepend,
-                      is_closed: Optional[bool] = None, line: Optional[str] = None,
-                      task_title: Optional[str] = None, shift: Optional[str] = None, brigade: Optional[str] = None,
-                      batch_number: Optional[int] = None, batch_date: Optional[datetime] = None,
-                      nomenclature: Optional[str] = None, ekn_code: Optional[str] = None,
-                      work_center: Optional[str] = None, shift_start_date: Optional[datetime] = None,
-                      shift_end_date: Optional[datetime] = None,
-                      count: int = 15, page: int = 1):
+async def get_by_filters(task_service: TaskServiceDepend,
+                         is_closed: Optional[bool] = None, line: Optional[str] = None,
+                         task_title: Optional[str] = None, shift: Optional[str] = None, brigade: Optional[str] = None,
+                         batch_number: Optional[int] = None, batch_date: Optional[datetime] = None,
+                         nomenclature: Optional[str] = None, ekn_code: Optional[str] = None,
+                         work_center: Optional[str] = None, shift_start_date: Optional[datetime] = None,
+                         shift_end_date: Optional[datetime] = None,
+                         count: int = 15, page: int = 1):
     result: Result[List[TaskResult], str] = await task_service.get_by_filters(
         is_closed=is_closed,
         task_title=task_title,
@@ -108,4 +108,4 @@ async def update_task(task_service: TaskServiceDepend,
 
     match result:
         case Success(value):
-            return value
+            return [task_result_to_task_scheme(task) for task in value]

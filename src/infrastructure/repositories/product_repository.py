@@ -24,6 +24,9 @@ class ProductRepository(BaseRepository, IProductRepository):
         result = await self.session.execute(query)
         return result.scalar_one()
 
-    async def aggregate(self, batch_id: int) -> List[int]:
-        pass
+    async def get_by_code(self, code: str) -> Product | None:
+        query = select(Product).where(Product.code == code)
+        result = await self.session.execute(query)
+
+        return result.scalar_one_or_none()
     

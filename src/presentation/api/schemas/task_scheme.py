@@ -17,7 +17,8 @@ class TaskScheme(BaseModel):
     line: str
     shift: str
     brigade: str
-    batch: int
+    batch_id: int
+    batch_number: int
     nomenclature: str
     ekn_code: str
     work_center: str
