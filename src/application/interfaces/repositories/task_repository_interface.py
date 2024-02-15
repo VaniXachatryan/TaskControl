@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional
 
 from src.application.interfaces.repositories.repository_interface import IRepository
@@ -17,7 +17,7 @@ class ITaskRepository(IRepository, ABC):
             task_title: Optional[str] = None, shift_number: Optional[str] = None,
             shift_start_at: Optional[datetime] = None, shift_end_at: Optional[datetime] = None,
             brigade_title: Optional[str] = None, batch_number: Optional[str] = None,
-            batch_date: Optional[datetime] = None, nomenclature: Optional[str] = None,
+            batch_date: Optional[date] = None, nomenclature: Optional[str] = None,
             ekn_code: Optional[str] = None, work_center_code: Optional[str] = None,
             limit: int = 15, offset: int = 0
     ) -> List[Task]:

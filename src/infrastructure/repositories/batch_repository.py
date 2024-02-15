@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date as onlydate
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +13,7 @@ class BatchRepository(BaseRepository, IBatchRepository):
     def __init__(self, session: AsyncSession):
         super().__init__(session=session, entity=Batch)
 
-    async def get_by_number_and_date(self, number: int, date: datetime, line_id: int) -> Batch | None:
+    async def get_by_number_and_date(self, number: int, date: onlydate, line_id: int) -> Batch | None:
         query = (select(Batch)
                  .where(Batch.number == number)
                  .where(Batch.line_id == line_id)
@@ -21,7 +21,7 @@ class BatchRepository(BaseRepository, IBatchRepository):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_or_create_by_number_and_date(self, number: int, date: datetime, line_id: int) -> Batch:
+    async def get_or_create_by_number_and_date(self, number: int, date: onlydate, line_id: int) -> Batch:
         query = (select(Batch)
                  .where(Batch.line_id == line_id)
                  .where(Batch.number == number)

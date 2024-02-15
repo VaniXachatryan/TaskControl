@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 
 from returns.result import Result, Success, Failure
@@ -33,7 +33,7 @@ class TaskService(ITaskService):
             shift: str,
             brigade_title: str,
             batch_number: int,
-            batch_date: datetime,
+            batch_date: date,
             nomenclature: str,
             ekn_code: str,
             work_center_code: str,
@@ -41,7 +41,6 @@ class TaskService(ITaskService):
             shift_end_date: Optional[datetime]
     ) -> Result[TaskResult, str]:
         async with self.uow:
-            batch_date = batch_date.replace(tzinfo=None)
             shift_start_date = shift_start_date.replace(tzinfo=None)
             shift_end_date = shift_end_date.replace(tzinfo=None)
             line: Line = await self.uow.lines.get_or_create_by_code(code=line_code)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date as onlydate
 
 from pydantic import BaseModel, Field
 
@@ -6,4 +6,4 @@ from pydantic import BaseModel, Field
 class BatchScheme(BaseModel):
     id: int = Field(..., description="ID партии")
     number: int = Field(..., description="Номер партии")
-    date: datetime = Field(..., description="Дата партии")
+    date: onlydate = Field(..., description="Дата партии")
