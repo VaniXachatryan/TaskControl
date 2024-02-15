@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Response, status
 from returns.result import Result, Success, Failure
 
 from src.application.common.results.task_result import TaskResultWithProductIdsResult, TaskResult

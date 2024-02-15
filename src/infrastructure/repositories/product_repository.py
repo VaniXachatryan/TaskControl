@@ -1,6 +1,6 @@
-from typing import List
 
-from sqlalchemy import select
+from typing import List
+from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.repositories.product_repository_interface import IProductRepository
@@ -18,3 +18,12 @@ class ProductRepository(BaseRepository, IProductRepository):
         result = await self.session.execute(query)
 
         return [row[0] for row in result.all()]
+
+    async def any_by_code(self, code: str) -> bool:
+        query = select(exists().where(Product.code == code))
+        result = await self.session.execute(query)
+        return result.scalar_one()
+
+    async def aggregate(self, batch_id: int) -> List[int]:
+        pass
+    

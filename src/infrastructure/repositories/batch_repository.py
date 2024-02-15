@@ -13,11 +13,14 @@ class BatchRepository(BaseRepository, IBatchRepository):
     def __init__(self, session: AsyncSession):
         super().__init__(session=session, entity=Batch)
 
-    async def get_by_number_and_date(self, number: int, date: onlydate, line_id: int) -> Batch | None:
+    async def get_by_number_and_date(self, number: int, date: onlydate, line_id: int = None) -> Batch | None:
         query = (select(Batch)
                  .where(Batch.number == number)
-                 .where(Batch.line_id == line_id)
                  .where(Batch.date == date))
+
+        if line_id is not None:
+            query = query.where(Batch.line_id == line_id)
+
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 

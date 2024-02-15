@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
@@ -9,6 +11,8 @@ class Product(BaseModel):
     __tablename__ = 'products'
 
     code: Mapped[str] = mapped_column(unique=True)
+    is_aggregated: Mapped[bool] = mapped_column(default=False)
+    aggregated_at: Mapped[datetime] = mapped_column(nullable=True, default=None)
     batch_id: Mapped[int] = mapped_column(ForeignKey(Batch.id))
 
     batch: Mapped[Batch] = relationship(Batch, lazy="joined")

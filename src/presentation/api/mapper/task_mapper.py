@@ -2,7 +2,7 @@ from src.application.common.results.task_result import TaskResultWithProductIdsR
 from src.presentation.api.schemas.task_scheme import TaskWithProductIdsScheme, TaskScheme
 
 
-def task_with_product_ids_result_to_task_with_product_scheme(result: TaskResultWithProductIdsResult):
+def task_with_product_ids_result_to_task_with_product_scheme(result: TaskResultWithProductIdsResult) -> TaskWithProductIdsScheme:
     return TaskWithProductIdsScheme(
         id=result.id,
         title=result.title,
@@ -18,7 +18,7 @@ def task_with_product_ids_result_to_task_with_product_scheme(result: TaskResultW
     )
 
 
-def task_result_to_task_scheme(result: TaskResult):
+def task_result_to_task_scheme(result: TaskResult) -> TaskScheme:
     return TaskScheme(
         id=result.id,
         title=result.title,

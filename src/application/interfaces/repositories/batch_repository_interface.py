@@ -8,7 +8,7 @@ from src.domain.entities.batch import Batch
 class IBatchRepository(IRepository, ABC):
 
     @abstractmethod
-    async def get_by_number_and_date(self, number: int, date: onlydate, line_id: int) -> Batch | None:
+    async def get_by_number_and_date(self, number: int, date: onlydate, line_id: int = None) -> Batch | None:
         pass
 
     @abstractmethod
