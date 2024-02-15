@@ -1,7 +1,3 @@
-import asyncio
-
-from sqlalchemy.exc import PendingRollbackError
-
 from src.application.interfaces.repositories.batch_repository_interface import IBatchRepository
 from src.application.interfaces.repositories.brigade_repository_interface import IBrigadeRepository
 from src.application.interfaces.repositories.line_repository_interface import ILineRepository
