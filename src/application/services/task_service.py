@@ -191,6 +191,9 @@ class TaskService(ITaskService):
             shift_start_date: Optional[datetime] = None, shift_end_date: Optional[datetime] = None,
             count: int = 15, page: int = 1
     ) -> Result[List[TaskResult], str]:
+        count = 1 if count < 1 else count
+        page = 1 if page < 1 else page
+
         async with self.uow:
             tasks = await self.uow.tasks.get_list_by_filters(
                 is_closed=is_closed,
