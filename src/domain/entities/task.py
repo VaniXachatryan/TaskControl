@@ -14,7 +14,7 @@ from src.domain.entities.work_center import WorkCenter
 class Task(BaseModel):
     __tablename__ = "tasks"
 
-    line_id: Mapped[int] = mapped_column(ForeignKey(Line.id))
+    # line_id: Mapped[int] = mapped_column(ForeignKey(Line.id))
     title: Mapped[str]
     is_closed: Mapped[bool] = mapped_column(default=False)
     closed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -25,7 +25,7 @@ class Task(BaseModel):
     nomenclature: Mapped[str]
     ekn_code: Mapped[str]
 
-    line: Mapped[Line] = relationship(Line, lazy="joined")
+    # line: Mapped[Line] = relationship(Line, lazy="joined")
     batch: Mapped[Batch] = relationship(Batch, lazy="joined")
     work_center: Mapped[WorkCenter] = relationship(WorkCenter, lazy="joined")
     shift: Mapped[Shift] = relationship(Shift, lazy="joined")

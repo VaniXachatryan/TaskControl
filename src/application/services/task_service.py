@@ -1,7 +1,5 @@
 from datetime import datetime, date
-from typing import Optional, List
-
-from returns.result import Result, Success, Failure
+from typing import Optional, List, Any
 
 from src.application.common.results.batch_result import BatchResult
 from src.application.common.results.brigade_result import BrigadeResult
@@ -39,7 +37,7 @@ class TaskService(ITaskService):
             work_center_code: str,
             shift_start_date: datetime,
             shift_end_date: Optional[datetime]
-    ) -> Result[TaskResult, str]:
+    ) -> (TaskResult, str):
         async with self.uow:
             line: Line = await self.uow.lines.get_or_create_by_code(code=line_code)
             batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(number=batch_number, date=batch_date,
@@ -51,7 +49,7 @@ class TaskService(ITaskService):
 
             task: Task = await self.uow.tasks.get_by_batch_id(batch_id=batch.id) or Task()
 
-            task.line = line
+            # task.line = line
             task.title = task_title
             task.is_closed = is_closed
             task.closed_at = None
@@ -69,7 +67,7 @@ class TaskService(ITaskService):
 
             await self.uow.commit()
 
-            return Success(TaskResult(
+            return TaskResult(
                 id=task.id or 0,
                 is_closed=task.is_closed,
                 title=task.title,
@@ -81,13 +79,13 @@ class TaskService(ITaskService):
                 nomenclature=task.nomenclature,
                 ekn_code=task.ekn_code,
                 work_center=WorkCenterResult(id=work_center.id, code=work_center.code)
-            ))
+            ), None
 
-    async def get_by_id_with_product_id(self, task_id: str) -> Result[TaskResultWithProductIdsResult, str]:
+    async def get_by_id_with_product_id(self, task_id: str) -> (TaskResultWithProductIdsResult, str):
         async with self.uow:
             task: Task | None = await self.uow.tasks.get_by_id(entity_id=task_id)
             if task is None:
-                return Failure(TaskErrors.not_found)
+                return None, TaskErrors.not_found
 
             products = await self.uow.products.get_ids_list_by_batch_id(batch_id=task.batch_id)
 
@@ -95,7 +93,7 @@ class TaskService(ITaskService):
                 id=task.id,
                 is_closed=task.is_closed,
                 title=task.title,
-                line=LineResult(id=task.line.id, code=task.line.code),
+                line=LineResult(id=task.batch.line.id, code=task.batch.line.code),
                 shift=ShiftResult(id=task.shift.id, number=task.shift.number,
                                   start_at=task.shift.start_at, end_at=task.shift.end_at),
                 brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
@@ -106,7 +104,7 @@ class TaskService(ITaskService):
                 products=products
             )
 
-            return Success(result)
+            return result, None
 
     async def update(
             self,
@@ -123,19 +121,19 @@ class TaskService(ITaskService):
             work_center_code: Optional[str],
             shift_start_date: Optional[datetime],
             shift_end_date: Optional[datetime]
-    ) -> Result[TaskResult, str]:
+    ) -> (List[TaskResult], str):
 
         async with self.uow:
             task: Task | None = await self.uow.tasks.get_by_id(entity_id=task_id)
 
             if task is None:
-                return Failure(TaskErrors.not_found)
+                return None, TaskErrors.not_found
 
             batch_date = batch_date if batch_date is not None else task.batch.date
             shift_start_date = shift_start_date if shift_start_date is not None else task.shift.start_at
             shift_end_date = shift_end_date if shift_end_date is not None else task.shift.end_at
 
-            line: Line = await self.uow.lines.get_or_create_by_code(code=line_code) if line_code else task.line
+            line: Line = await self.uow.lines.get_or_create_by_code(code=line_code) if line_code else task.batch.line
 
             batch: Batch = await self.uow.batches.get_or_create_by_number_and_date(
                 number=batch_number,
@@ -153,7 +151,6 @@ class TaskService(ITaskService):
             brigade: Brigade = await self.uow.brigades.get_or_create_by_title(
                 title=brigade_title) if brigade_title else task.brigade
 
-            task.line = line
             task.title = task_title if task_title is not None else task.title
             task.is_closed = is_closed if is_closed is not None else task.is_closed
             task.closed_at = datetime.utcnow() if task.is_closed is True else None
@@ -168,11 +165,11 @@ class TaskService(ITaskService):
 
             await self.uow.commit()
 
-            return Success(TaskResult(
+            return TaskResult(
                 id=task.id,
                 is_closed=task.is_closed,
                 title=task.title,
-                line=LineResult(id=task.line.id, code=task.line.code),
+                line=LineResult(id=task.batch.line.id, code=task.batch.line.code),
                 shift=ShiftResult(id=task.shift.id, number=task.shift.number,
                                   start_at=task.shift.start_at, end_at=task.shift.end_at),
                 brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
@@ -180,7 +177,7 @@ class TaskService(ITaskService):
                 nomenclature=task.nomenclature,
                 ekn_code=task.ekn_code,
                 work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code)
-            ))
+            ), None
 
     async def get_by_filters(
             self, is_closed: Optional[bool] = None, line_code: Optional[str] = None,
@@ -190,7 +187,7 @@ class TaskService(ITaskService):
             ekn_code: Optional[str] = None, work_center_code: Optional[str] = None,
             shift_start_date: Optional[datetime] = None, shift_end_date: Optional[datetime] = None,
             count: int = 15, page: int = 1
-    ) -> Result[List[TaskResult], str]:
+    ) -> (List[TaskResult], str):
         count = 1 if count < 1 else count
         page = 1 if page < 1 else page
 
@@ -211,11 +208,11 @@ class TaskService(ITaskService):
                 limit=count, offset=(page-1)*count
             )
 
-            return Success([TaskResult(
+            return [TaskResult(
                 id=task.id,
                 is_closed=task.is_closed,
                 title=task.title,
-                line=LineResult(id=task.line.id, code=task.line.code),
+                line=LineResult(id=task.batch.line.id, code=task.batch.line.code),
                 shift=ShiftResult(id=task.shift.id, number=task.shift.number,
                                   start_at=task.shift.start_at, end_at=task.shift.end_at),
                 brigade=BrigadeResult(id=task.brigade.id, title=task.brigade.title),
@@ -223,4 +220,4 @@ class TaskService(ITaskService):
                 nomenclature=task.nomenclature,
                 ekn_code=task.ekn_code,
                 work_center=WorkCenterResult(id=task.work_center.id, code=task.work_center.code)
-            ) for task in tasks])
+            ) for task in tasks], None

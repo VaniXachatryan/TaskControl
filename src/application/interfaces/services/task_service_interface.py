@@ -24,12 +24,12 @@ class ITaskService(ABC):
             work_center_code: str,
             shift_start_date: datetime,
             shift_end_date: Optional[datetime]
-    ) -> Result[Task, str]:
+    ) -> (Task, str):
         pass
 
     @abstractmethod
     async def get_by_id_with_product_id(self, task_id: str) \
-            -> Result[TaskResultWithProductIdsResult, str]:
+            -> (TaskResultWithProductIdsResult, str):
         pass
 
     @abstractmethod
@@ -41,5 +41,5 @@ class ITaskService(ABC):
             ekn_code: Optional[str] = None, work_center_code: Optional[str] = None,
             shift_start_date: Optional[datetime] = None, shift_end_date: Optional[datetime] = None,
             count: int = 15, page: int = 1
-    ) -> Result[List[TaskResult], str]:
+    ) -> (List[TaskResult], str):
         pass

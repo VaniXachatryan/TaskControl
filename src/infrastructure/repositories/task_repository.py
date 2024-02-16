@@ -3,7 +3,6 @@ from typing import Optional, List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from src.application.interfaces.repositories.task_repository_interface import ITaskRepository
 from src.domain.entities.batch import Batch
