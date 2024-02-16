@@ -39,7 +39,7 @@ class TaskRepository(BaseRepository, ITaskRepository):
             query = query.where(Task.is_closed == is_closed)
 
         if line_code is not None:
-            query = query.join(Task.line).where(Line.code == line_code)
+            query = query.join(Task.batch).join(Batch.line).where(Line.code == line_code)
 
         if task_title is not None:
             query = query.where(Task.title == task_title)

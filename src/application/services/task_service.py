@@ -49,7 +49,6 @@ class TaskService(ITaskService):
 
             task: Task = await self.uow.tasks.get_by_batch_id(batch_id=batch.id) or Task()
 
-            # task.line = line
             task.title = task_title
             task.is_closed = is_closed
             task.closed_at = None

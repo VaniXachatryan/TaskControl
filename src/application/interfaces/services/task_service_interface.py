@@ -2,10 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional, List
 
-from returns.result import Result
-
 from src.application.common.results.task_result import TaskResultWithProductIdsResult, TaskResult
-from src.domain.entities.task import Task
 
 
 class ITaskService(ABC):
@@ -24,7 +21,7 @@ class ITaskService(ABC):
             work_center_code: str,
             shift_start_date: datetime,
             shift_end_date: Optional[datetime]
-    ) -> (Task, str):
+    ) -> (TaskResult, str):
         pass
 
     @abstractmethod
