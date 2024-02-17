@@ -80,13 +80,13 @@ class TaskService(ITaskService):
                 work_center=WorkCenterResult(id=work_center.id, code=work_center.code)
             ), None
 
-    async def get_by_id_with_product_id(self, task_id: str) -> (TaskResultWithProductIdsResult, str):
+    async def get_by_id_with_product_id(self, task_id: int) -> (TaskResultWithProductIdsResult, str):
         async with self.uow:
             task: Task | None = await self.uow.tasks.get_by_id(entity_id=task_id)
             if task is None:
                 return None, TaskErrors.not_found
 
-            products = await self.uow.products.get_ids_list_by_batch_id(batch_id=task.batch_id)
+            products: List[int] = await self.uow.products.get_ids_list_by_batch_id(batch_id=task.batch_id)
 
             result: TaskResultWithProductIdsResult = TaskResultWithProductIdsResult(
                 id=task.id,

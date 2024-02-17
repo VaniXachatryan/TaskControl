@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 
 from src.application.common.results.task_result import TaskResultWithProductIdsResult, TaskResult
@@ -15,7 +15,7 @@ class ITaskService(ABC):
             shift: str,
             brigade_title: str,
             batch_number: int,
-            batch_date: datetime,
+            batch_date: date,
             nomenclature: str,
             ekn_code: str,
             work_center_code: str,
@@ -25,7 +25,7 @@ class ITaskService(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id_with_product_id(self, task_id: str) \
+    async def get_by_id_with_product_id(self, task_id: int) \
             -> (TaskResultWithProductIdsResult, str):
         pass
 

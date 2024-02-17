@@ -17,7 +17,7 @@ class ProductRepository(BaseRepository, IProductRepository):
         query = select(Product.id).where(Product.batch_id == batch_id)
         result = await self.session.execute(query)
 
-        return [row[0] for row in result.all()]
+        return [row for row in result.scalars()]
 
     async def any_by_code(self, code: str) -> bool:
         query = select(exists().where(Product.code == code))
