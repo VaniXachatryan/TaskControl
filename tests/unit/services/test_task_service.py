@@ -19,6 +19,23 @@ from src.domain.entities.task import Task
 from src.domain.entities.work_center import WorkCenter
 
 
+@pytest.fixture(autouse=True, scope="class")
+def data():
+    print("Initialize data")
+    line: Line | None = Line(id=1, code='wQ21eDS')
+    batch: Batch = Batch(id=1, line=line, number='44231', date=date(2024, 0o2, 17))
+    work_center: WorkCenter = WorkCenter(id=1, code='WC1')
+    brigade: Brigade = Brigade(id=1, title='Бригада 1')
+    shift: Shift = Shift(id=1, start_at=datetime(2024, 0o2, 17, 12, 00, 00),
+                         end_at=None, number='T1')
+    task: Task = Task(id=1, batch=batch, work_center=work_center, shift=shift,
+                      brigade=brigade, title='Test task title', is_closed=False,
+                      nomenclature='Test nomenclature', ekn_code='EKN_CODE_TEST')
+
+    yield line, batch, work_center, brigade, shift, task
+
+
+@pytest.mark.usefixtures('data')
 class TestTaskService:
 
     @pytest.mark.parametrize(
@@ -52,28 +69,23 @@ class TestTaskService:
             shift_start_date: datetime,
             shift_end_date: Optional[datetime],
             task_service,
+            unit_of_work_mock,
+            data,
             mocker):
         # Arrange
-        line: Line = Line(id=1, code=line_code)
-        batch: Batch = Batch(id=1, line_id=line.id, number=batch_number, date=batch_date)
-        work_center: WorkCenter = WorkCenter(id=1, code=work_center_code)
-        brigade: Brigade = Brigade(id=1, title=brigade_title)
-        shift: Shift = Shift(id=1, start_at=shift_start_date, end_at=shift_end_date, number=shift_number)
-        task: Task = Task(id=1, batch=batch, work_center=work_center, shift=shift,
-                          brigade=brigade, title=task_title, is_closed=is_closed,
-                          nomenclature=nomenclature, ekn_code=ekn_code)
+        (line, batch, work_center, brigade, shift, task) = data
 
-        mock_uow = AsyncMock()
-        mock_uow.lines.get_or_create_by_code.return_value = line
-        mock_uow.work_centers.get_or_create_by_code.return_value = work_center
-        mock_uow.batches.get_or_create_by_number_and_date.return_value = batch
-        mock_uow.shifts.get_or_create_by_number.return_value = shift
-        mock_uow.brigades.get_or_create_by_title.return_value = brigade
-        mock_uow.tasks.get_by_batch_id.return_value = task
+        unit_of_work_mock.lines.get_or_create_by_code.return_value = line
+        unit_of_work_mock.work_centers.get_or_create_by_code.return_value = work_center
+        unit_of_work_mock.batches.get_or_create_by_number_and_date.return_value = batch
+        unit_of_work_mock.shifts.get_or_create_by_number.return_value = shift
+        unit_of_work_mock.brigades.get_or_create_by_title.return_value = brigade
+        unit_of_work_mock.tasks.get_by_batch_id.return_value = task
+
+        value: TaskResult | None = None
 
         # Act
-        value: TaskResult | None = None
-        async with mocker.patch.object(task_service, 'uow', mock_uow):
+        async with mocker.patch.object(task_service, 'uow', unit_of_work_mock):
             value, error = await task_service.add(is_closed=is_closed, nomenclature=nomenclature, ekn_code=ekn_code,
                                                   task_title=task_title, line_code=line_code, shift=shift_number,
                                                   brigade_title=brigade_title, batch_number=batch_number,
@@ -103,30 +115,24 @@ class TestTaskService:
             task_id: int,
             expected_result: str,
             task_service,
+            unit_of_work_mock,
+            data,
             mocker):
         # Arrange
-        line: Line | None = Line(id=1, code='wQ21eDS') if task_id != 2 else None
-        batch: Batch = Batch(id=1, line=line if line is not None else 0, number='44231', date=date(2024, 0o2, 17))
-        work_center: WorkCenter = WorkCenter(id=1, code='WC1')
-        brigade: Brigade = Brigade(id=1, title='Бригада 1')
-        shift: Shift = Shift(id=1, start_at=datetime(2024, 0o2, 17, 12, 00, 00),
-                             end_at=None, number='T1')
-        task: Task = Task(id=1, batch=batch, work_center=work_center, shift=shift,
-                          brigade=brigade, title='Test task title', is_closed=False,
-                          nomenclature='Test nomenclature', ekn_code='EKN_CODE_TEST')
+        (line, batch, work_center, brigade, shift, task) = data
 
         product_ids = [1, 2, 3, 4, 5]
 
-        mock_uow = AsyncMock()
         if expected_result == 'task_not_found':
-            mock_uow.tasks.get_by_id.return_value = None
+            unit_of_work_mock.tasks.get_by_id.return_value = None
         elif expected_result == 'good':
-            mock_uow.products.get_ids_list_by_batch_id.return_value = product_ids
-            mock_uow.tasks.get_by_id.return_value = task
+            unit_of_work_mock.products.get_ids_list_by_batch_id.return_value = product_ids
+            unit_of_work_mock.tasks.get_by_id.return_value = task
+
+        value: TaskResultWithProductIdsResult | None = None
 
         # Act
-        value: TaskResultWithProductIdsResult | None = None
-        async with mocker.patch.object(task_service, 'uow', mock_uow):
+        async with mocker.patch.object(task_service, 'uow', unit_of_work_mock):
             value, error = await task_service.get_by_id_with_product_id(task_id=task_id)
 
         # Assert
@@ -148,3 +154,4 @@ class TestTaskService:
 
         if expected_result == 'task_not_found':
             assert (value, error) == (None, TaskErrors.not_found)
+
