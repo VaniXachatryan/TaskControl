@@ -93,8 +93,9 @@ class TestTaskService:
                                                   shift_start_date=shift_start_date, shift_end_date=shift_end_date)
 
         # Assert
+        unit_of_work_mock.commit.assert_awaited_once()
         assert (value, error) == (TaskResult(
-            id=task.id or 0,
+            id=task.id,
             is_closed=task.is_closed,
             title=task.title,
             line=LineResult(id=line.id, code=line.code),
