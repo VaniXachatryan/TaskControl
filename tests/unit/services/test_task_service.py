@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, List
 from unittest.mock import MagicMock, AsyncMock
 
 import pytest
@@ -10,6 +10,7 @@ from src.application.common.results.line_result import LineResult
 from src.application.common.results.shift_result import ShiftResult
 from src.application.common.results.task_result import TaskResult, TaskResultWithProductIdsResult
 from src.application.common.results.work_center_result import WorkCenterResult
+from src.application.interfaces.services.task_service_interface import ITaskService
 from src.domain.common.errors.task_errors import TaskErrors
 from src.domain.entities.batch import Batch
 from src.domain.entities.brigade import Brigade
@@ -82,7 +83,7 @@ class TestTaskService:
         unit_of_work_mock.brigades.get_or_create_by_title.return_value = brigade
         unit_of_work_mock.tasks.get_by_batch_id.return_value = task
 
-        value: TaskResult | None = None
+        value = None
 
         # Act
         async with mocker.patch.object(task_service, 'uow', unit_of_work_mock):
@@ -94,6 +95,7 @@ class TestTaskService:
 
         # Assert
         unit_of_work_mock.commit.assert_awaited_once()
+        assert isinstance(value, TaskResult)
         assert (value, error) == (TaskResult(
             id=task.id,
             is_closed=task.is_closed,
@@ -130,7 +132,7 @@ class TestTaskService:
             unit_of_work_mock.products.get_ids_list_by_batch_id.return_value = product_ids
             unit_of_work_mock.tasks.get_by_id.return_value = task
 
-        value: TaskResultWithProductIdsResult | None = None
+        value = None
 
         # Act
         async with mocker.patch.object(task_service, 'uow', unit_of_work_mock):
@@ -138,6 +140,7 @@ class TestTaskService:
 
         # Assert
         if expected_result == 'good':
+            assert isinstance(value, TaskResultWithProductIdsResult)
             assert value == TaskResultWithProductIdsResult(
                 id=task.id,
                 is_closed=task.is_closed,
@@ -156,3 +159,86 @@ class TestTaskService:
         if expected_result == 'task_not_found':
             assert (value, error) == (None, TaskErrors.not_found)
 
+    @pytest.mark.parametrize(
+        'task_id, is_closed, task_title, line_code, shift_number,'
+        'brigade_title, batch_number, batch_date, nomenclature,'
+        'ekn_code, work_center_code, shift_start_date, shift_end_date',
+        [(1, True, 'New title', None, 'T5', "New brigade name", None, None,
+          None, None, "New WC Code", None, None),
+         (2, False, 'New title', None, None, "New brigade name", None, None,
+          "New nomenclature", None, None, None, None),
+         (3, False, 'New title', None, None, None, None, None,
+          "New nomenclature", None, None, None, datetime.now())
+         ])
+    async def test_update_should_be_commit(
+            self,
+            task_id: int,
+            is_closed: Optional[bool],
+            task_title: Optional[str],
+            line_code: Optional[str],
+            shift_number: Optional[str],
+            brigade_title: Optional[str],
+            batch_number: Optional[int],
+            batch_date: Optional[datetime],
+            nomenclature: Optional[str],
+            ekn_code: Optional[str],
+            work_center_code: Optional[str],
+            shift_start_date: Optional[datetime],
+            shift_end_date: Optional[datetime],
+            task_service: ITaskService,
+            unit_of_work_mock,
+            data,
+            mocker):
+        # Arrange
+        (line, batch, work_center, brigade, shift, task) = data
+
+        task.id = task_id
+        brigade.title = brigade_title if brigade_title else brigade.title
+        work_center.code = work_center_code if work_center_code else work_center.code
+        shift.number = shift_number if shift_number else shift.number
+        shift.end_at = None if is_closed is False else datetime.now()
+
+        unit_of_work_mock.tasks.get_by_id.return_value = task if task_id == 3 else None
+        unit_of_work_mock.lines.get_or_create_by_code.return_value = line
+        unit_of_work_mock.batches.get_or_create_by_number_and_date.return_value = batch
+        unit_of_work_mock.work_centers.get_or_create_by_code.return_value = work_center
+        unit_of_work_mock.shifts.get_or_create_by_number.return_value = shift
+        unit_of_work_mock.brigades.get_or_create_by_title.return_value = brigade
+
+        value = None
+
+        # Act
+        async with mocker.patch.object(task_service, 'uow', unit_of_work_mock):
+            value, error = await task_service.update(task_id=task_id, is_closed=is_closed, task_title=task_title,
+                                                     line_code=line_code, shift=shift_number,
+                                                     brigade_title=brigade_title,
+                                                     batch_number=batch_number, batch_date=batch_date,
+                                                     nomenclature=nomenclature,
+                                                     ekn_code=ekn_code, work_center_code=work_center_code,
+                                                     shift_start_date=shift_start_date,
+                                                     shift_end_date=shift_end_date)
+
+        # Assert
+        if value:
+            unit_of_work_mock.tasks.update.assert_called_once_with(entity=task)
+            unit_of_work_mock.commit.assert_awaited_once()
+            assert isinstance(value, TaskResult)
+            assert value == TaskResult(
+                id=task_id,
+                is_closed=is_closed if is_closed else task.is_closed,
+                title=task_title if task_title else task.title,
+                line=LineResult(id=line.id, code=line_code if line_code else line.code),
+                shift=ShiftResult(id=shift.id, number=shift_number if shift_number else shift.number,
+                                  start_at=shift_start_date if shift_start_date else shift.start_at,
+                                  end_at=None if is_closed is False else shift.end_at),
+                brigade=BrigadeResult(id=brigade.id, title=brigade_title if brigade_title else brigade.title),
+                batch=BatchResult(id=batch.id, number=batch_number if batch_number else batch.number,
+                                  date=batch_date if batch_date else batch.date),
+                nomenclature=nomenclature if nomenclature else task.nomenclature,
+                ekn_code=ekn_code if ekn_code else task.ekn_code,
+                work_center=WorkCenterResult(id=work_center.id,
+                                             code=work_center_code if work_center_code else work_center.code)
+            )
+
+        if error:
+            assert error == TaskErrors.not_found

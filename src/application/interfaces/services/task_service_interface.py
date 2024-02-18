@@ -40,3 +40,22 @@ class ITaskService(ABC):
             count: int = 15, page: int = 1
     ) -> (List[TaskResult], str):
         pass
+
+    @abstractmethod
+    async def update(
+            self,
+            task_id: int,
+            is_closed: Optional[bool],
+            task_title: Optional[str],
+            line_code: Optional[str],
+            shift: Optional[str],
+            brigade_title: Optional[str],
+            batch_number: Optional[int],
+            batch_date: Optional[datetime],
+            nomenclature: Optional[str],
+            ekn_code: Optional[str],
+            work_center_code: Optional[str],
+            shift_start_date: Optional[datetime],
+            shift_end_date: Optional[datetime]
+    ) -> (TaskResult, str):
+        pass

@@ -120,7 +120,7 @@ class TaskService(ITaskService):
             work_center_code: Optional[str],
             shift_start_date: Optional[datetime],
             shift_end_date: Optional[datetime]
-    ) -> (List[TaskResult], str):
+    ) -> (TaskResult, str):
 
         async with self.uow:
             task: Task | None = await self.uow.tasks.get_by_id(entity_id=task_id)
@@ -152,7 +152,7 @@ class TaskService(ITaskService):
 
             task.title = task_title if task_title is not None else task.title
             task.is_closed = is_closed if is_closed is not None else task.is_closed
-            task.closed_at = datetime.utcnow() if task.is_closed is True else None
+            task.closed_at = datetime.now() if task.is_closed is True else None
             task.work_center = work_center
             task.shift = shift
             task.brigade = brigade
