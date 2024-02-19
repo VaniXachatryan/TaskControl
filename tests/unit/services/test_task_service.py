@@ -162,15 +162,15 @@ class TestTaskService:
     @pytest.mark.parametrize(
         'task_id, is_closed, task_title, line_code, shift_number,'
         'brigade_title, batch_number, batch_date, nomenclature,'
-        'ekn_code, work_center_code, shift_start_date, shift_end_date',
+        'ekn_code, work_center_code, shift_start_date, shift_end_date, expected_result',
         [(1, True, 'New title', None, 'T5', "New brigade name", None, None,
-          None, None, "New WC Code", None, None),
+          None, None, "New WC Code", None, None, 'good'),
          (2, False, 'New title', None, None, "New brigade name", None, None,
-          "New nomenclature", None, None, None, None),
+          "New nomenclature", None, None, None, datetime.now(), 'good'),
          (3, False, 'New title', None, None, None, None, None,
-          "New nomenclature", None, None, None, datetime.now())
+          "New nomenclature", None, None, None, datetime.now(), 'task_not_found')
          ])
-    async def test_update_should_be_commit(
+    async def test_update(
             self,
             task_id: int,
             is_closed: Optional[bool],
@@ -185,6 +185,7 @@ class TestTaskService:
             work_center_code: Optional[str],
             shift_start_date: Optional[datetime],
             shift_end_date: Optional[datetime],
+            expected_result: str,
             task_service: ITaskService,
             unit_of_work_mock,
             data,
@@ -198,7 +199,7 @@ class TestTaskService:
         shift.number = shift_number if shift_number else shift.number
         shift.end_at = None if is_closed is False else datetime.now()
 
-        unit_of_work_mock.tasks.get_by_id.return_value = task if task_id == 3 else None
+        unit_of_work_mock.tasks.get_by_id.return_value = None if expected_result == 'task_not_found' else task
         unit_of_work_mock.lines.get_or_create_by_code.return_value = line
         unit_of_work_mock.batches.get_or_create_by_number_and_date.return_value = batch
         unit_of_work_mock.work_centers.get_or_create_by_code.return_value = work_center
@@ -219,11 +220,11 @@ class TestTaskService:
                                                      shift_end_date=shift_end_date)
 
         # Assert
-        if value:
+        if expected_result == 'good':
             unit_of_work_mock.tasks.update.assert_called_once_with(entity=task)
             unit_of_work_mock.commit.assert_awaited_once()
             assert isinstance(value, TaskResult)
-            assert value == TaskResult(
+            assert (value, error) == (TaskResult(
                 id=task_id,
                 is_closed=is_closed if is_closed else task.is_closed,
                 title=task_title if task_title else task.title,
@@ -238,7 +239,7 @@ class TestTaskService:
                 ekn_code=ekn_code if ekn_code else task.ekn_code,
                 work_center=WorkCenterResult(id=work_center.id,
                                              code=work_center_code if work_center_code else work_center.code)
-            )
+            ), None)
 
-        if error:
-            assert error == TaskErrors.not_found
+        if expected_result == 'task_not_found':
+            assert (value, error) == (None, TaskErrors.not_found)
