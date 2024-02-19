@@ -1,0 +1,38 @@
+version: "3.1"
+services:
+  task-control.backend:
+    image: vanixachatryan/task-control-backend:latest
+    ports:
+      - "80:80"
+    restart: always
+    depends_on:
+      - task-control.postgres
+    env_file:
+      - .env
+    networks:
+      - default_network
+
+  task-control.postgres:
+      image: postgres:latest
+      ports:
+        - "5432:5432"
+#      volumes:
+#        - task-control.postgres-volume:/var/lib/postgresql/data
+      environment:
+        - POSTGRES_DB=${DB_NAME}
+        - POSTGRES_USER=${DB_USER}
+        - POSTGRES_PASSWORD=${DB_PASS}
+      env_file:
+        - .env
+      restart: always
+      networks:
+        - default_network
+networks:
+  default_network:
+    driver: bridge
+    attachable: true
+    name: backend.network
+
+volumes:
+  task-control.postgres-volume:
+    external: true

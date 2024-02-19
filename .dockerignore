@@ -1,0 +1,10 @@
+.venv
+.env.dev
+LICENSE
+README.md
+.gitignore
+.DB_Store
+.git
+.idea
+.pytest_cash
+tests

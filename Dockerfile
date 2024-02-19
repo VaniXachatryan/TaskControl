@@ -1,0 +1,12 @@
+FROM python:3.12
+WORKDIR /app/
+
+COPY requirements.txt requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+
+COPY . /app/
+
+WORKDIR /app
+
+ENTRYPOINT ["bash", "./run_script/run.sh"]
